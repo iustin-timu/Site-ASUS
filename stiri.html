@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ro" data-theme="light">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Știri și Noutăți - ASUS Suceava</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* VARIABILE */
+    :root {
+      --color-primary: #003087; --color-primary-light: #e8edf7; --color-gold: #F4A261;
+      --color-bg: #F0F4F8; --color-surface: #FFFFFF; --color-border: rgba(0,48,135,0.12);
+      --color-text: #0A1628; --color-text-muted: #4A5568;
+      --shadow-md: 0 12px 32px rgba(0,48,135,0.08); --shadow-lg: 0 24px 60px rgba(0,48,135,0.15);
+      --radius-lg: 20px; --radius-xl: 30px; --radius-full: 9999px;
+      --font-display: 'Plus Jakarta Sans', sans-serif; --font-body: 'Inter', sans-serif;
+      --navbar-bg: transparent; --navbar-scrolled-bg: rgba(255,255,255,0.85);
+      --nav-link-color: rgba(255,255,255,0.9); --nav-link-scrolled: #4A5568;
+    }
+
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-text);line-height:1.6;}
+    a{text-decoration:none;color:inherit}
+    h1, h2, h3 { font-family:var(--font-display); }
+    .container{max-width:1200px;margin:0 auto;padding:0 24px}
+
+    /* NAVBAR */
+    #navbar{position:fixed;top:0;left:0;right:0;z-index:1000;transition:all .5s; padding: 15px 0;}
+    #navbar.scrolled{background:var(--navbar-scrolled-bg);backdrop-filter:blur(20px);box-shadow:var(--shadow-md); padding: 5px 0;}
+    .nav-inner{display:flex;align-items:center;justify-content:space-between;height:70px;}
+    .nav-links{display:flex;gap:6px;}
+    .nav-links a{font-weight:600;font-size:.9rem;padding:10px 18px;border-radius:var(--radius-full);color:var(--nav-link-color);transition:all .3s}
+    .nav-links a:hover{background:rgba(255,255,255,.2)}
+    #navbar.scrolled .nav-links a{color:var(--nav-link-scrolled)}
+    #navbar.scrolled .nav-links a:hover{color:var(--color-primary);background:var(--color-primary-light)}
+    .logo-alb { display: block; width: 180px; } .logo-negru { display: none; width: 180px;}
+    #navbar.scrolled .logo-alb { display: none; } #navbar.scrolled .logo-negru { display: block; }
+
+    /* HERO */
+    #hero { min-height: 40vh; background: linear-gradient(135deg, var(--color-primary) 0%, rgba(26, 115, 232, 1) 100%); display: flex; align-items: flex-end; padding-bottom: 50px; }
+    .hero-content { color: white; }
+    .hero-content h1 { font-size: clamp(2.5rem, 5vw, 4rem); margin-bottom: 10px; }
+
+    /* ════════════════════════════════════════════════════════════════
+       GRID-UL DE ȘTIRI (STIL PORTAL)
+    ════════════════════════════════════════════════════════════════ */
+    .news-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 30px;
+        padding: 60px 0 100px;
+    }
+
+    /* Card General de Știre */
+    .news-card {
+        background: var(--color-surface);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        border: 1px solid var(--color-border);
+        box-shadow: var(--shadow-sm);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+    }
+    .news-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .news-img-box { height: 220px; overflow: hidden; }
+    .news-img-box img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s; }
+    .news-card:hover .news-img-box img { transform: scale(1.08); }
+
+    .news-content { padding: 25px; display: flex; flex-direction: column; flex: 1; }
+    .news-category { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--color-primary); letter-spacing: 0.1em; margin-bottom: 10px; }
+    .news-title { font-size: 1.25rem; color: var(--color-text); line-height: 1.3; margin-bottom: 12px; }
+    .news-excerpt { font-size: 0.95rem; color: var(--color-text-muted); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; flex: 1; }
+    
+    .news-footer { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--color-text-muted); }
+
+    /* ȘTIREA PRINCIPALĂ (FEATURED) - Ocupă primele 2 coloane sau e full lățime */
+    .news-card.featured {
+        grid-column: 1 / -1; /* Ocupă tot rândul */
+        flex-direction: row;
+        min-height: 450px;
+    }
+    .news-card.featured .news-img-box {
+        width: 60%;
+        height: auto;
+    }
+    .news-card.featured .news-content {
+        width: 40%;
+        padding: 50px 40px;
+        justify-content: center;
+    }
+    .news-card.featured .news-title {
+        font-size: 2.2rem;
+        margin-bottom: 20px;
+    }
+    .news-card.featured .news-excerpt {
+        font-size: 1.1rem;
+        -webkit-line-clamp: 5;
+    }
+
+    @media (max-width: 900px) {
+        .news-card.featured { flex-direction: column; }
+        .news-card.featured .news-img-box { width: 100%; height: 300px; }
+        .news-card.featured .news-content { width: 100%; padding: 30px; }
+    }
+
+    /* Loader */
+    .loader { text-align: center; padding: 100px; font-weight: 700; color: var(--color-primary); font-size: 1.2rem; grid-column: 1 / -1; }
+  </style>
+</head>
+
+<body>
+  <header id="navbar">
+    <div class="container nav-inner">
+      <a href="asus-suceava.html" class="nav-logo">
+        <img src="logo-alb.png" alt="Logo ASUS" class="logo-alb">
+        <img src="logo-negru.png" alt="Logo ASUS" class="logo-negru">
+      </a>
+      <nav class="nav-links">
+        <a href="#despre">Despre noi</a>
+        <a href="reprezentanti.html">Studenți Reprezentanți</a>
+        <a href="conducere.html">Conducere</a>
+        <a href="#proiecte">Proiecte</a>
+        <a href="stiri.html">Știri</a>
+        <a href="#butonul-rosu" class="dr-red">Butonul Roșu</a>
+    <a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="hero">
+      <div class="container">
+        <div class="hero-content">
+          <h1>Știri și Noutăți</h1>
+          <p>Fii la curent cu ultimele decizii, proiecte și evenimente din viața studențească suceveană.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="container">
+      <div id="newsGrid" class="news-grid">
+        <div class="loader">Se încarcă știrile... <br><small>Aducem datele din server</small></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // 1. Inițializare Supabase
+    const SUPABASE_URL = 'https://hxlwskalrmcepaqdyrgp.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4bHdza2Fscm1jZXBhcWR5cmdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwMzE0NDYsImV4cCI6MjA5MjYwNzQ0Nn0.9V9PDaNtSvZqrP4Kg6YahvIKMiJfPpVZpLW26d0NbZw';
+    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Navbar Scroll Logic
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) navbar.classList.add('scrolled');
+        else navbar.classList.remove('scrolled');
+    });
+
+    // 2. Funcție pentru a formata data (ex: 25 Apr 2026)
+    function formatDate(dateString) {
+        const options = { day: 'numeric', month: 'short', year: 'numeric' };
+        return new Date(dateString).toLocaleDateString('ro-RO', options);
+    }
+
+    // 3. Extrage prima imagine din șirul separat prin virgulă
+    function getFirstImage(imgString) {
+        if (!imgString) return 'https://picsum.photos/seed/asus/800/600'; // Placeholder dacă n-are poză
+        const images = imgString.split(',');
+        return images[0].trim();
+    }
+
+    // 4. Funcția principală de încărcare din baza de date
+    async function loadLiveNews() {
+        const grid = document.getElementById('newsGrid');
+        
+        try {
+            // Cerem datele din tabelul 'stiri', ordonate descrescător după dată
+            const { data, error } = await _supabase
+                .from('stiri')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                grid.innerHTML = `<div class="loader" style="color:var(--color-text-muted)">Nu există nicio știre publicată momentan.</div>`;
+                return;
+            }
+
+            // Construim HTML-ul dinamic
+            grid.innerHTML = data.map((stire, index) => {
+                // Prima știre primește clasa 'featured' pentru a fi mai mare
+                const isFeatured = index === 0 ? 'featured' : '';
+                const mainImage = getFirstImage(stire.imagine_url);
+                const dataPublicarii = formatDate(stire.created_at);
+
+               return `
+                    <article class="news-card ${isFeatured}" onclick="window.location.href='stiri-detaliu.html?id=${stire.id}'">
+                        <div class="news-img-box">
+                            <img src="${mainImage}" alt="Imagine știre" loading="lazy">
+                        </div>
+                        <div class="news-content">
+                            <div class="news-category">${stire.categorie || 'General'}</div>
+                            <h2 class="news-title">${stire.titlu}</h2>
+                            <p class="news-excerpt">${stire.continut}</p>
+                            <div class="news-footer">
+                                <span><i data-lucide="calendar" width="14" height="14" style="vertical-align:middle; margin-right:4px;"></i> ${dataPublicarii}</span>
+                                <span style="color:var(--color-primary); font-weight:700;">Citește <i data-lucide="arrow-right" width="14" height="14" style="vertical-align:middle;"></i></span>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+            // Activăm iconițele
+            if (window.lucide) lucide.createIcons();
+
+        } catch (err) {
+            console.error(err);
+            grid.innerHTML = `<div class="loader" style="color:red;">A apărut o eroare la încărcarea știrilor. Reîncărcați pagina.</div>`;
+        }
+    }
+
+    // Pornim încărcarea
+    loadLiveNews();
+  </script>
+</body>
+</html>

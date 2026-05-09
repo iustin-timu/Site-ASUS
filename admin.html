@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ro" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASUS Admin — Control Panel</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root { --primary: #003087; --red: #D62828; --bg: #F0F4F8; --card-bg: #ffffff; --border: rgba(0,48,135,0.12); }
+    body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: #0A1628; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: 0 4px 18px rgba(0,48,135,0.08); margin-bottom: 20px; }
+    
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;}
+    .tab-btn { padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border); background: white; cursor: pointer; font-weight: 600; transition: 0.3s; }
+    .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+    h1, h2 { font-family: 'Plus Jakarta Sans', sans-serif; margin-top: 0; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .field { margin-bottom: 14px; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; }
+    input, select, textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-family: inherit; box-sizing: border-box; }
+    
+    input[type="file"] { padding: 10px; background: #f8fafc; border: 2px dashed #cbd5e1; cursor: pointer; }
+    input[type="file"]:hover { border-color: var(--primary); }
+
+    .btn { border: none; border-radius: 9999px; padding: 12px 24px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-red { background: var(--red); color: white; }
+    .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+    .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+    
+    .btn-small { padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; border: 1px solid transparent; }
+    .btn-small-edit { background: var(--primary); color: white; }
+    .btn-small-del { background: var(--red); color: white; }
+
+    .item-list { max-height: 600px; overflow-y: auto; }
+    .item { padding: 15px; border-bottom: 1px solid var(--border); background: #fdfdfd; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;}
+    .hidden { display: none !important; }
+    
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- LOGIN CARD -->
+  <div class="card" id="loginCard">
+    <h1>🔑 Admin ASUS</h1>
+    <div class="field"><label>Email</label><input type="email" id="loginEmail"></div>
+    <div class="field"><label>Parolă</label><input type="password" id="loginPass"></div>
+    <button class="btn btn-primary" id="loginBtn">Autentificare</button>
+    <p id="loginMsg" style="color: var(--red); font-weight: 600; margin-top: 10px;"></p>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div id="adminPanel" class="hidden">
+    <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <h1>Panou Control ASUS</h1>
+        <div class="tabs">
+          <button class="tab-btn active" id="tab-reprezentanti-btn" onclick="switchTab('reprezentanti')">👥 Reprezentanți</button>
+          <button class="tab-btn" id="tab-conducere-btn" onclick="switchTab('conducere')">👔 Conducere</button>
+          <button class="tab-btn" id="tab-stiri-btn" onclick="switchTab('stiri')">📰 Știri & Noutăți</button>
+          <button class="tab-btn" id="tab-proiecte-btn" onclick="switchTab('proiecte')">🚀 Proiecte</button>
+        </div>
+      </div>
+      <button class="btn btn-red" id="logoutBtn">Logout</button>
+    </div>
+
+    <!-- SECTION: REPREZENTANTI -->
+    <div id="section-reprezentanti" class="tab-content">
+      <div class="grid">
+        <div class="card">
+          <h2 id="title-rep">Adaugă Reprezentant</h2>
+          <div class="field"><label>Nume Complet</label><input id="rep_name"></div>
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin: 0;">
+            <div class="field"><label>Acronim Facultate (ex: FIESC)</label><input id="rep_abbr"></div>
+            <div class="field">
+                <label>Structură</label>
+                <select id="rep_body"><option value="Senat">Senat</option><option value="Consiliu">Consiliu</option></select>
+            </div>
+          </div>
+          <div class="field"><label>Nume Facultate Complet</label><input id="rep_faculty"></div>
+          <div class="field"><label>Email USV</label><input id="rep_email"></div>
+          <div class="field"><label>Telefon</label><input id="rep_phone"></div>
+          <div style="display:flex; gap:10px;">
+              <button class="btn btn-primary" id="saveRepBtn">Salvează</button>
+              <button class="btn btn-outline hidden" id="cancelRepEdit" onclick="cancelEditMode()">Anulează</button>
+          </div>
+        </div>
+        <div class="card"><h2>Membri Activi</h2><div id="repList" class="item-list"></div></div>
+      </div>
+    </div>
+
+    <!-- SECTION: CONDUCERE -->
+    <div id="section-conducere" class="tab-content hidden">
+      <div class="grid">
+        <div class="card">
+          <h2 id="title-cond">Adaugă Membru Conducere</h2>
+          <div class="field">
+              <label>Secțiune Pagină</label>
+              <select id="cond_cat" onchange="toggleAnMandat()">
+                  <option value="bc">Biroul de Conducere (BC)</option>
+                  <option value="bce">Biroul de Conducere Extins (BCE)</option>
+                  <option value="cenzor">Cenzor</option>
+                  <option value="istoric">Istoric (Foști Președinți)</option>
+              </select>
+          </div>
+          <div class="field"><label>Nume Complet</label><input id="cond_name"></div>
+          <div class="field"><label>Funcție (ex: Vicepreședinte PR)</label><input id="cond_role"></div>
+          
+          <div class="field">
+              <label>Ordine afișare (1 = primul, 2 = al doilea...)</label>
+              <input type="number" id="cond_order" value="1" min="1">
+          </div>
+          
+          <div class="field hidden" id="field-an-mandat">
+              <label>An Mandat (ex: 2022-2024)</label>
+              <input id="cond_year">
+          </div>
+
+          <div class="field">
+              <label>Poză Profil Nouă</label>
+              <input type="file" id="cond_image" accept="image/*">
+              <small style="color: gray;">Alege un fișier doar dacă vrei să pui/schimbi poza.</small>
+          </div>
+          <div style="display:flex; gap:10px;">
+              <button class="btn btn-primary" id="saveCondBtn">Salvează în Conducere</button>
+              <button class="btn btn-outline hidden" id="cancelCondEdit" onclick="cancelEditMode()">Anulează</button>
+          </div>
+        </div>
+        <div class="card"><h2>Listă Conducere</h2><div id="condList" class="item-list"></div></div>
+      </div>
+    </div>
+
+    <!-- SECTION: STIRI -->
+    <div id="section-stiri" class="tab-content hidden">
+      <div class="grid">
+        <div class="card">
+          <h2 id="title-news">Postează Știre</h2>
+          <div class="field"><label>Titlu Știre</label><input id="news_title"></div>
+          <div class="field"><label>Categorie</label><input id="news_cat"></div>
+          <div class="field">
+              <label>Imagini Noi</label>
+              <input type="file" id="news_images" accept="image/*" multiple>
+              <small style="color: gray;">Alege imagini doar dacă vrei să le înlocuiești pe cele vechi.</small>
+          </div>
+          <div class="field"><label>Conținut</label><textarea id="news_content" rows="6"></textarea></div>
+          <div style="display:flex; gap:10px;">
+              <button class="btn btn-primary" id="saveNewsBtn">Publică Știrea</button>
+              <button class="btn btn-outline hidden" id="cancelNewsEdit" onclick="cancelEditMode()">Anulează</button>
+          </div>
+        </div>
+        <div class="card"><h2>Știri Publicate</h2><div id="newsList" class="item-list"></div></div>
+      </div>
+    </div>
+
+    <!-- SECTION: PROIECTE -->
+    <div id="section-proiecte" class="tab-content hidden">
+      <div class="grid">
+        <div class="card">
+          <h2 id="title-proj">Adaugă Proiect</h2>
+          <div class="field"><label>Titlu Proiect</label><input id="proj_title"></div>
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin: 0;">
+            <div class="field">
+                <label>Status</label>
+                <select id="proj_status">
+                    <option value="activ">În desfășurare</option>
+                    <option value="viitor">Viitor</option>
+                    <option value="trecut">Trecut</option>
+                </select>
+            </div>
+            <div class="field"><label>Data Eveniment (ex: Nov 2026)</label><input id="proj_date"></div>
+          </div>
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin: 0;">
+            <div class="field"><label>Text Tag (ex: Tradiție)</label><input id="proj_tag_text"></div>
+            <div class="field">
+                <label>Culoare Tag</label>
+                <select id="proj_tag_color">
+                    <option value="blue">Albastru (ASUS)</option>
+                    <option value="gold">Auriu / Portocaliu</option>
+                    <option value="teal">Turcoaz</option>
+                    <option value="green">Verde</option>
+                </select>
+            </div>
+          </div>
+          <div class="field">
+              <label>Imagine Proiect</label>
+              <input type="file" id="proj_image" accept="image/*">
+          </div>
+          <div class="field"><label>Scurtă descriere</label><textarea id="proj_desc" rows="4"></textarea></div>
+          <div style="display:flex; gap:10px;">
+              <button class="btn btn-primary" id="saveProjBtn">Salvează Proiect</button>
+              <button class="btn btn-outline hidden" id="cancelProjEdit" onclick="cancelEditMode()">Anulează</button>
+          </div>
+        </div>
+        <div class="card"><h2>Proiecte Existente</h2><div id="projList" class="item-list"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://hxlwskalrmcepaqdyrgp.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4bHdza2Fscm1jZXBhcWR5cmdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwMzE0NDYsImV4cCI6MjA5MjYwNzQ0Nn0.9V9PDaNtSvZqrP4Kg6YahvIKMiJfPpVZpLW26d0NbZw';
+  const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let editId = null;
+  const memory = { reps: [], cond: [], news: [], proj: [] };
+
+  async function checkSession() {
+    const { data } = await _supabase.auth.getSession();
+    const isOk = !!data.session;
+    document.getElementById('loginCard').classList.toggle('hidden', isOk);
+    document.getElementById('adminPanel').classList.toggle('hidden', !isOk);
+    if(isOk) {
+        await loadData('representatives');
+        await loadData('conducere');
+        await loadData('stiri');
+        await loadData('proiecte');
+    }
+  }
+
+  document.getElementById('loginBtn').onclick = async () => {
+    const email = document.getElementById('loginEmail').value;
+    const pass = document.getElementById('loginPass').value;
+    const { error } = await _supabase.auth.signInWithPassword({ email: email, password: pass });
+    if(error) alert(error.message); else checkSession();
+  };
+
+  document.getElementById('logoutBtn').onclick = async () => { await _supabase.auth.signOut(); location.reload(); };
+
+  window.switchTab = function(tabId) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    document.getElementById('section-' + tabId).classList.remove('hidden');
+    document.getElementById('tab-' + tabId + '-btn').classList.add('active');
+    cancelEditMode();
+  }
+
+  window.toggleAnMandat = function() {
+      const isIstoric = document.getElementById('cond_cat').value === 'istoric';
+      document.getElementById('field-an-mandat').classList.toggle('hidden', !isIstoric);
+  }
+
+  async function uploadImage(file) {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const { error } = await _supabase.storage.from('Images').upload(fileName, file);
+    if (error) throw error;
+    const { data } = _supabase.storage.from('Images').getPublicUrl(fileName);
+    return data.publicUrl;
+  }
+
+  // --- INCARCARE DATE ---
+  async function loadData(table) {
+      if (table === 'representatives') {
+          const { data } = await _supabase.from(table).select('*').order('name');
+          memory.reps = data || [];
+          renderList('repList', memory.reps, 'rep', r => `<strong>${r.name}</strong><br><small>${r.faculty_acronym} - ${r.body}</small>`);
+      } 
+      else if (table === 'conducere') {
+          const { data } = await _supabase.from(table).select('*').order('ordine', {ascending: true});
+          memory.cond = data || [];
+          renderList('condList', memory.cond, 'cond', c => `
+            <div style="display:flex; gap:10px; align-items:center;">
+                ${c.poza_url ? `<img src="${c.poza_url}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;">` : '👤'}
+                <div><strong>${c.nume}</strong><br><small>${c.categorie.toUpperCase()} - (Ord. ${c.ordine || 1})</small></div>
+            </div>
+          `);
+      } 
+      else if (table === 'stiri') {
+          const { data } = await _supabase.from(table).select('*').order('created_at', {ascending: false});
+          memory.news = data || [];
+          renderList('newsList', memory.news, 'news', n => `<strong>${n.titlu}</strong><br><small>${n.categorie}</small>`);
+      }
+      else if (table === 'proiecte') {
+          const { data } = await _supabase.from(table).select('*').order('created_at', {ascending: false});
+          memory.proj = data || [];
+          renderList('projList', memory.proj, 'proj', p => `
+            <div style="display:flex; gap:10px; align-items:center;">
+                ${p.imagine_url ? `<img src="${p.imagine_url}" style="width:35px; height:35px; border-radius:6px; object-fit:cover;">` : '🖼️'}
+                <div><strong>${p.titlu}</strong><br><small>Status: ${p.status} | Tag: ${p.tag_text || '-'}</small></div>
+            </div>
+          `);
+      }
+  }
+
+  function renderList(containerId, dataArray, type, contentFormatFn) {
+      const html = dataArray.map(item => `
+        <div class="item">
+            <div>${contentFormatFn(item)}</div>
+            <div style="display:flex; gap:5px;">
+                <button class="btn-small btn-small-edit" onclick="triggerEdit('${type}', '${item.id}')">Editează</button>
+                <button class="btn-small btn-small-del" onclick="triggerDelete('${type}', '${item.id}')">X</button>
+            </div>
+        </div>
+      `).join('');
+      document.getElementById(containerId).innerHTML = html;
+  }
+
+  // --- INIȚIERE MOD EDITARE ---
+  window.triggerEdit = function(type, id) {
+      editId = id;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      document.getElementById('cond_image').value = '';
+      document.getElementById('news_images').value = '';
+      document.getElementById('proj_image').value = '';
+
+      if (type === 'rep') {
+          const item = memory.reps.find(i => i.id == id);
+          if(!item) return;
+          document.getElementById('rep_name').value = item.name || '';
+          document.getElementById('rep_abbr').value = item.faculty_acronym || '';
+          document.getElementById('rep_body').value = item.body || 'Consiliu';
+          document.getElementById('rep_faculty').value = item.faculty_name || '';
+          document.getElementById('rep_email').value = item.email || '';
+          document.getElementById('rep_phone').value = item.phone || '';
+          
+          document.getElementById('saveRepBtn').innerText = "Salvează Modificările";
+          document.getElementById('cancelRepEdit').classList.remove('hidden');
+          document.getElementById('title-rep').innerText = "Editează Reprezentant";
+      } 
+      else if (type === 'cond') {
+          const item = memory.cond.find(i => i.id == id);
+          if(!item) return;
+          document.getElementById('cond_cat').value = item.categorie || 'bc';
+          document.getElementById('cond_name').value = item.nume || '';
+          document.getElementById('cond_role').value = item.functie || '';
+          document.getElementById('cond_order').value = item.ordine || 1;
+          document.getElementById('cond_year').value = item.an_mandat || '';
+          toggleAnMandat();
+          
+          document.getElementById('saveCondBtn').innerText = "Salvează Modificările";
+          document.getElementById('cancelCondEdit').classList.remove('hidden');
+          document.getElementById('title-cond').innerText = "Editează Membru";
+      } 
+      else if (type === 'news') {
+          const item = memory.news.find(i => i.id == id);
+          if(!item) return;
+          document.getElementById('news_title').value = item.titlu || '';
+          document.getElementById('news_cat').value = item.categorie || '';
+          document.getElementById('news_content').value = item.continut || '';
+          
+          document.getElementById('saveNewsBtn').innerText = "Salvează Modificările";
+          document.getElementById('cancelNewsEdit').classList.remove('hidden');
+          document.getElementById('title-news').innerText = "Editează Știre";
+      }
+      else if (type === 'proj') {
+          const item = memory.proj.find(i => i.id == id);
+          if(!item) return;
+          document.getElementById('proj_title').value = item.titlu || '';
+          document.getElementById('proj_status').value = item.status || 'activ';
+          document.getElementById('proj_date').value = item.data_eveniment || '';
+          document.getElementById('proj_tag_text').value = item.tag_text || '';
+          document.getElementById('proj_tag_color').value = item.tag_color || 'blue';
+          document.getElementById('proj_desc').value = item.descriere || '';
+          
+          document.getElementById('saveProjBtn').innerText = "Salvează Modificările";
+          document.getElementById('cancelProjEdit').classList.remove('hidden');
+          document.getElementById('title-proj').innerText = "Editează Proiect";
+      }
+  }
+
+  // --- ANULARE MOD EDITARE ---
+  window.cancelEditMode = function() {
+      editId = null;
+      document.querySelectorAll('input, textarea').forEach(el => { el.value = ''; });
+      
+      document.getElementById('rep_body').value = 'Senat';
+      document.getElementById('cond_cat').value = 'bc';
+      document.getElementById('cond_order').value = 1;
+      document.getElementById('proj_status').value = 'activ';
+      document.getElementById('proj_tag_color').value = 'blue';
+      toggleAnMandat();
+
+      document.getElementById('saveRepBtn').innerText = "Salvează";
+      document.getElementById('saveCondBtn').innerText = "Salvează în Conducere";
+      document.getElementById('saveNewsBtn').innerText = "Publică Știrea";
+      document.getElementById('saveProjBtn').innerText = "Salvează Proiect";
+      
+      document.getElementById('cancelRepEdit').classList.add('hidden');
+      document.getElementById('cancelCondEdit').classList.add('hidden');
+      document.getElementById('cancelNewsEdit').classList.add('hidden');
+      document.getElementById('cancelProjEdit').classList.add('hidden');
+      
+      document.getElementById('title-rep').innerText = "Adaugă Reprezentant";
+      document.getElementById('title-cond').innerText = "Adaugă Membru Conducere";
+      document.getElementById('title-news').innerText = "Postează Știre";
+      document.getElementById('title-proj').innerText = "Adaugă Proiect";
+  }
+
+  // --- SALVARE REPREZENTANTI ---
+  document.getElementById('saveRepBtn').onclick = async (e) => {
+      const btn = e.target; btn.disabled = true; btn.innerText = "Se salvează...";
+      try {
+          const payload = {
+              name: document.getElementById('rep_name').value, 
+              faculty_acronym: document.getElementById('rep_abbr').value,
+              faculty_name: document.getElementById('rep_faculty').value, 
+              body: document.getElementById('rep_body').value, 
+              email: document.getElementById('rep_email').value, 
+              phone: document.getElementById('rep_phone').value
+          };
+          if (editId) await _supabase.from('representatives').update(payload).eq('id', editId);
+          else await _supabase.from('representatives').insert([payload]);
+          
+          await loadData('representatives');
+          cancelEditMode(); 
+          alert("Salvat cu succes!");
+      } catch (err) { alert("Eroare: " + err.message); }
+      btn.disabled = false;
+  };
+
+  // --- SALVARE CONDUCERE ---
+  document.getElementById('saveCondBtn').onclick = async (e) => {
+      const btn = e.target; btn.disabled = true; btn.innerText = "Se salvează...";
+      try {
+          const fileInput = document.getElementById('cond_image');
+          let uploadedUrl = null; 
+          if(fileInput.files.length > 0) {
+              uploadedUrl = await uploadImage(fileInput.files[0]);
+          }
+
+          const payload = {
+              nume: document.getElementById('cond_name').value,
+              functie: document.getElementById('cond_role').value,
+              categorie: document.getElementById('cond_cat').value,
+              an_mandat: document.getElementById('cond_year').value,
+              ordine: parseInt(document.getElementById('cond_order').value) || 1
+          };
+          if (uploadedUrl) payload.poza_url = uploadedUrl;
+
+          if (editId) await _supabase.from('conducere').update(payload).eq('id', editId);
+          else await _supabase.from('conducere').insert([payload]);
+          
+          await loadData('conducere');
+          cancelEditMode(); 
+          alert("Salvat cu succes!"); 
+      } catch(err) { alert("Eroare: " + err.message); }
+      btn.disabled = false;
+  };
+
+  // --- SALVARE STIRI ---
+  document.getElementById('saveNewsBtn').onclick = async (e) => {
+      const btn = e.target; btn.disabled = true; btn.innerText = "Se publică...";
+      try {
+          const fileInput = document.getElementById('news_images');
+          let uploadedUrls = [];
+          if(fileInput.files.length > 0) {
+              for (const file of fileInput.files) { uploadedUrls.push(await uploadImage(file)); }
+          }
+          
+          const payload = {
+              titlu: document.getElementById('news_title').value,
+              categorie: document.getElementById('news_cat').value,
+              continut: document.getElementById('news_content').value
+          };
+          if (uploadedUrls.length > 0) payload.imagine_url = uploadedUrls.join(',');
+
+          if (editId) await _supabase.from('stiri').update(payload).eq('id', editId);
+          else await _supabase.from('stiri').insert([payload]);
+
+          await loadData('stiri');
+          cancelEditMode(); 
+          alert("Salvat cu succes!");
+      } catch (err) { alert("Eroare: " + err.message); }
+      btn.disabled = false;
+  };
+
+  // --- SALVARE PROIECTE ---
+  document.getElementById('saveProjBtn').onclick = async (e) => {
+      const btn = e.target; btn.disabled = true; btn.innerText = "Se salvează...";
+      try {
+          const fileInput = document.getElementById('proj_image');
+          let uploadedUrl = null; 
+          if(fileInput.files.length > 0) {
+              uploadedUrl = await uploadImage(fileInput.files[0]);
+          }
+
+          const payload = {
+              titlu: document.getElementById('proj_title').value,
+              status: document.getElementById('proj_status').value,
+              data_eveniment: document.getElementById('proj_date').value,
+              tag_text: document.getElementById('proj_tag_text').value,
+              tag_color: document.getElementById('proj_tag_color').value,
+              descriere: document.getElementById('proj_desc').value
+          };
+          
+          if (uploadedUrl) payload.imagine_url = uploadedUrl;
+
+          if (editId) await _supabase.from('proiecte').update(payload).eq('id', editId);
+          else await _supabase.from('proiecte').insert([payload]);
+          
+          await loadData('proiecte');
+          cancelEditMode(); 
+          alert("Proiect Salvat!"); 
+      } catch(err) { alert("Eroare: " + err.message); }
+      btn.disabled = false;
+  };
+
+  // --- STERGERE ---
+  window.triggerDelete = async function(type, id) {
+      if(!confirm("Sigur vrei să ștergi definitiv? Această acțiune nu poate fi anulată.")) return;
+      
+      let table = '';
+      if(type === 'rep') table = 'representatives';
+      else if(type === 'cond') table = 'conducere';
+      else if(type === 'news') table = 'stiri';
+      else if(type === 'proj') table = 'proiecte';
+
+      await _supabase.from(table).delete().eq('id', id);
+      await loadData(table);
+  }
+
+  checkSession();
+</script>
+</body>
+</html>

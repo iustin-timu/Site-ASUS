@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ro" data-theme="light">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Lista studenților reprezentanți ASUS din Senatul USV și Consiliile Facultăților.">
+  <title>Studenți Reprezentanți — ASUS Suceava</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    /* ════════════════════════════════════════════════════════════════
+       VARIABILE
+    ════════════════════════════════════════════════════════════════ */
+    :root {
+      --color-primary: #003087; --color-primary-hover: #001f5c; --color-primary-light: #e8edf7;
+      --color-red: #D62828; --color-gold: #F4A261; --color-teal: #0096C7;
+      --color-bg: #F0F4F8; --color-surface: #FFFFFF; --color-border: rgba(0,48,135,0.12);
+      --color-text: #0A1628; --color-text-muted: #4A5568; --color-text-faint: #A0AEC0;
+
+      --shadow-sm: 0 4px 12px rgba(0,48,135,0.05);
+      --shadow-md: 0 12px 32px rgba(0,48,135,0.08);
+      --shadow-lg: 0 24px 60px rgba(0,48,135,0.15);
+      
+      --radius-sm: 8px; --radius-md: 12px; --radius-lg: 20px; --radius-full: 9999px;
+      --font-display: 'Plus Jakarta Sans', sans-serif; --font-body: 'Inter', sans-serif;
+
+      --navbar-bg: transparent; --navbar-scrolled-bg: rgba(255,255,255,0.85);
+      --nav-link-color: rgba(255,255,255,0.9); --nav-link-scrolled: #4A5568;
+    }
+
+    [data-theme="dark"] {
+      --color-primary: #4D7FCC; --color-primary-light: #0d1e3d;
+      --color-bg: #0A1628; --color-surface: #111d35; --color-border: rgba(255,255,255,0.10);
+      --color-text: #E2E8F4; --color-text-muted: #8899BB;
+      --navbar-scrolled-bg: rgba(10,22,40,0.85); --nav-link-scrolled: #8899BB;
+    }
+
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth;font-size:16px}
+    body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-text);line-height:1.6;overflow-x:hidden;transition:background .4s ease,color .4s ease;}
+    a{text-decoration:none;color:inherit}
+    button{cursor:pointer;border:none;background:none;font-family:inherit}
+
+    h1, h2, h3 { font-family:var(--font-display); }
+    h1{font-size:clamp(2.5rem,5vw,4rem);font-weight:800;line-height:1.1;letter-spacing:-.02em}
+    h2{font-size:clamp(1.8rem,4vw,2.5rem);font-weight:700;line-height:1.2;letter-spacing:-.01em}
+    .container{max-width:1200px;margin:0 auto;padding:0 24px}
+
+    /* ════════════════════════════════════════════════════════════════
+       ANIMAȚII REVEAL (APPLE STYLE)
+    ════════════════════════════════════════════════════════════════ */
+    .reveal { opacity: 0; transform: translateY(40px); transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .del-1 { transition-delay: 0.1s; } .del-2 { transition-delay: 0.2s; } .del-3 { transition-delay: 0.3s; }
+
+    /* ════════════════════════════════════════════════════════════════
+       NAVBAR
+    ════════════════════════════════════════════════════════════════ */
+    #navbar{position:fixed;top:0;left:0;right:0;z-index:1000;transition:all .5s cubic-bezier(0.16, 1, 0.3, 1); padding: 15px 0;}
+    #navbar.scrolled{background:var(--navbar-scrolled-bg);backdrop-filter:blur(20px);box-shadow:var(--shadow-md); padding: 5px 0;}
+    .nav-inner{display:flex;align-items:center;justify-content:space-between;height:70px;}
+    .nav-links{display:flex;gap:6px;}
+    .nav-links a{font-weight:600;font-size:.9rem;padding:10px 18px;border-radius:var(--radius-full);color:var(--nav-link-color);transition:all .3s}
+    .nav-links a:hover{background:rgba(255,255,255,.2)}
+    #navbar.scrolled .nav-links a{color:var(--nav-link-scrolled)}
+    #navbar.scrolled .nav-links a:hover{color:var(--color-primary);background:var(--color-primary-light)}
+    .nav-links .nav-red{color:#ffaaaa;} #navbar.scrolled .nav-links .nav-red{color:var(--color-red)}
+    .logo-alb { display: block; width: 180px; object-fit: contain; } 
+    .logo-negru { display: none; width: 180px; object-fit: contain;}
+    #navbar.scrolled .logo-alb { display: none; }
+    #navbar.scrolled .logo-negru { display: block; }
+    
+    .theme-toggle{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:var(--radius-full);color:rgba(255,255,255,.8);background:rgba(255,255,255,.12);transition:all .3s; cursor:pointer;}
+    .theme-toggle:hover{background:rgba(255,255,255,.25);color:#fff; transform: rotate(15deg);}
+    #navbar.scrolled .theme-toggle{color:var(--color-text-muted);background:var(--color-primary-light)}
+    #navbar.scrolled .theme-toggle:hover{color:var(--color-primary)}
+
+    /* Meniu Mobil */
+    .drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:998;opacity:0;transition:opacity .4s}
+    .drawer-overlay.visible{opacity:1}
+    .mobile-drawer{display:none;position:fixed;top:0;right:0;bottom:0;width:min(320px,85vw);background:var(--color-surface);box-shadow:var(--shadow-lg);z-index:999;transform:translateX(100%);transition:transform .5s cubic-bezier(0.16, 1, 0.3, 1);padding:100px 30px 30px;flex-direction:column;gap:10px;}
+    .mobile-drawer.open{transform:translateX(0)}
+    .mobile-drawer a{font-weight:700;font-size:1.2rem;color:var(--color-text);padding:14px;border-radius:var(--radius-lg);transition:all .3s}
+    .mobile-drawer a:hover{background:var(--color-primary-light);color:var(--color-primary);transform:translateX(10px)}
+    
+    .hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;width:44px;height:44px;gap:5px;border-radius:var(--radius-full);background:rgba(255,255,255,.12);transition:background .2s; border:none; cursor: pointer;}
+    .hamburger:hover{background:rgba(255,255,255,.2)}
+    .hamburger span{display:block;width:22px;height:2px;background:#fff;border-radius:2px;transition:all .3s cubic-bezier(.16,1,.3,1);transform-origin:center}
+    #navbar.scrolled .hamburger span{background:var(--color-text)}
+
+    /* ════════════════════════════════════════════════════════════════
+       HERO
+    ════════════════════════════════════════════════════════════════ */
+    #hero { min-height: 45vh; background: linear-gradient(135deg, var(--color-primary) 0%, rgba(26, 115, 232, 1) 100%); display: flex; align-items: flex-end; padding-bottom: 60px; position: relative;}
+    .hero-content { color: white; position: relative; z-index: 2; }
+    .hero-content h1 { margin-bottom: 15px; }
+    .hero-content p { font-size: 1.15rem; color: rgba(255,255,255,0.85); max-width: 600px; line-height: 1.6; }
+    .badge-hero { display:inline-flex;align-items:center;gap:8px;font-size:.75rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--color-gold);background:rgba(244,162,97,.15);padding:8px 16px;border-radius:var(--radius-full);margin-bottom:20px; border:1px solid rgba(244,162,97,.3); backdrop-filter:blur(4px);}
+
+    /* ════════════════════════════════════════════════════════════════
+       SENAT
+    ════════════════════════════════════════════════════════════════ */
+    #reprezentanti{background:var(--color-bg);padding:100px 0;}
+    .repr-header{text-align:center;margin-bottom:60px; max-width: 700px; margin-inline: auto;}
+    .repr-badge{display:inline-flex;align-items:center;gap:8px;font-size:.75rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--color-primary);background:var(--color-primary-light);padding:8px 18px;border-radius:var(--radius-full);margin-bottom:16px;}
+    [data-theme="dark"] .repr-badge {background:rgba(77,127,204,.15); color: #7ab0ff;}
+    .repr-header p {color: var(--color-text-muted); font-size: 1.1rem; margin-top: 15px;}
+    
+    .senators-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+    .senator-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:30px 20px;text-align:center;transition:all .4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; align-items: center;}
+    .senator-card:hover{transform:translateY(-8px);box-shadow:var(--shadow-lg); border-color: rgba(0, 48, 135, 0.3);}
+    .senator-avatar{width:64px;height:64px;border-radius:var(--radius-full);background:linear-gradient(135deg, var(--color-primary), var(--color-teal));display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-family:var(--font-display);font-weight:800;font-size:1.3rem;color:#fff;flex-shrink:0; box-shadow: 0 4px 12px rgba(0, 150, 199, 0.3);}
+    .senator-name{font-family:var(--font-display);font-weight:800;font-size:1.1rem;color:var(--color-text);margin-bottom:6px;line-height:1.25}
+    .senator-faculty{font-size:.8rem;color:var(--color-text-muted);line-height:1.5;margin-bottom:16px; font-weight: 600;}
+    .senator-contact {font-size: 0.85rem; color: var(--color-text-faint); margin-bottom: 20px; display: flex; flex-direction: column; gap: 6px; font-weight: 500;}
+    .senator-contact a {transition: color 0.2s;}
+    .senator-contact a:hover {color: var(--color-primary);}
+    .senator-badge{display:inline-flex;align-items:center;gap:5px;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#c9610a;background:rgba(244,162,97,.15);padding:4px 12px;border-radius:var(--radius-full); margin-top: auto;}
+
+    /* ════════════════════════════════════════════════════════════════
+       ACORDEON CONSILII
+    ════════════════════════════════════════════════════════════════ */
+    #consilii{background:var(--color-surface);padding:100px 0}
+    .accordion{display:flex;flex-direction:column;gap:12px; max-width: 1000px; margin: 0 auto;}
+    .acc-item{border:1px solid var(--color-border);border-radius:var(--radius-md);overflow:hidden;background:var(--color-bg); transition: all 0.3s;}
+    .acc-item:hover {border-color: rgba(0, 48, 135, 0.3); box-shadow: var(--shadow-sm);}
+    .acc-trigger{width:100%;display:flex;align-items:center;gap:16px;padding:20px 24px;background:none;font-family:var(--font-display);font-weight:800;font-size:1.05rem;color:var(--color-text);text-align:left;transition:background .3s;}
+    .acc-trigger:hover{background:var(--color-primary-light)}
+    .acc-trigger[aria-expanded="true"]{background:var(--color-primary-light);color:var(--color-primary)}
+    [data-theme="dark"] .acc-trigger[aria-expanded="true"]{background:rgba(77,127,204,.15);color:#7ab0ff}
+    
+    .acc-abbr{font-size:.8rem;font-weight:800;letter-spacing:.1em;color:var(--color-primary);background:rgba(0,48,135,.1);padding:4px 10px;border-radius:var(--radius-sm);flex-shrink:0}
+    [data-theme="dark"] .acc-abbr{background:rgba(77,127,204,.2);color:#7ab0ff}
+    .acc-chevron{margin-left:auto;color:var(--color-text-faint);transition:transform .4s cubic-bezier(0.16, 1, 0.3, 1);flex-shrink:0}
+    .acc-trigger[aria-expanded="true"] .acc-chevron{transform:rotate(180deg); color:var(--color-primary);}
+    
+    .acc-body{display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.4s cubic-bezier(0.16, 1, 0.3, 1);}
+    .acc-body.open{grid-template-rows: 1fr;}
+    .acc-inner{overflow: hidden;}
+    .acc-content-pad {padding: 10px 24px 24px; display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:16px;}
+    
+    .repr-row{display:flex;align-items:center;gap:14px;padding:16px;background:var(--color-surface);border:1px solid var(--color-border); border-radius:var(--radius-md);transition:all .3s}
+    .repr-row:hover{transform:translateX(5px); border-color: var(--color-teal); box-shadow: var(--shadow-sm);}
+    .repr-avatar-sm{width:48px;height:48px;border-radius:var(--radius-full);background:var(--color-primary);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:.9rem;color:#fff;flex-shrink:0}
+    .repr-info {display: flex; flex-direction: column; gap: 3px;}
+    .repr-info strong{font-weight:700;font-size:1rem;color:var(--color-text)}
+    .repr-info .role{font-size:.75rem;color:var(--color-teal); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 800;}
+    .repr-info .contact{font-size:.85rem;color:var(--color-text-muted); margin-top: 4px;}
+    .repr-info .contact a {transition: color 0.2s;}
+    .repr-info .contact a:hover {color: var(--color-primary);}
+
+    /* FOOTER */
+    #footer{background:#0A1628;padding:40px 0; text-align:center; color:rgba(255,255,255,0.4); margin-top: 0;}
+
+    /* LOADER */
+    .loader-msg { text-align: center; padding: 60px; font-weight: 700; color: var(--color-primary); grid-column: 1/-1; }
+
+    @media(max-width:1024px){ .senators-grid{grid-template-columns:repeat(3,1fr)} }
+    @media(max-width:768px){
+      .senators-grid{grid-template-columns:repeat(2,1fr)}
+      .nav-links{display:none}
+      .hamburger{display:flex}
+      .mobile-drawer{display:flex}
+      .acc-trigger { flex-direction: column; align-items: flex-start; position: relative;}
+      .acc-chevron { position: absolute; right: 24px; top: 24px;}
+    }
+    @media(max-width:480px){ .senators-grid{grid-template-columns:1fr} }
+  </style>
+</head>
+
+<body>
+    
+  <header id="navbar" role="banner">
+    <div class="container nav-inner">
+      <a href="asus-suceava.html" class="nav-logo" aria-label="ASUS Suceava — Acasă">
+        <img src="logo-alb.png" alt="ASUS Suceava" class="logo-alb">
+        <img src="logo-negru.png" alt="ASUS Suceava" class="logo-negru">
+      </a>
+
+      <div class="drawer-overlay" id="drawerOverlay" aria-hidden="true"></div>
+      <nav class="mobile-drawer" id="mobileDrawer" aria-label="Meniu mobil">
+        <a href="asus-suceava.html#despre">Despre noi</a>
+        <a href="reprezentanti.html" style="color:var(--color-gold)">Studenți Reprezentanți</a>
+        <a href="conducere.html">Conducere</a>
+        <a href="asus-suceava.html#proiecte">Proiecte</a>
+        <a href="stiri.html">Știri</a>
+        <a href="asus-suceava.html#contact">Contact</a>
+      </nav>
+
+      <nav class="nav-links" aria-label="Navigare principală">
+         <a href="asus-suceava.html#despre">Despre noi</a>
+         <a href="reprezentanti.html" style="color:var(--color-gold)">Studenți Reprezentanți</a>
+         <a href="conducere.html">Conducere</a>
+         <a href="asus-suceava.html#proiecte">Proiecte</a>
+         <a href="stiri.html">Știri</a>
+         <a href="asus-suceava.html#contact">Contact</a>
+      </nav>
+
+      <div class="nav-right">
+        <button class="theme-toggle" id="themeToggle" aria-label="Comută modul">
+          <i data-lucide="sun" id="iconSun" style="display:none; width: 18px; height: 18px;"></i>
+          <i data-lucide="moon" id="iconMoon" style="width: 18px; height: 18px;"></i>
+        </button>
+        <button class="hamburger" id="hamburger" aria-label="Deschide meniu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="hero">
+      <div class="hero-pattern"></div>
+      <div class="container">
+        <div class="hero-content">
+          <div class="badge-hero reveal"><i data-lucide="shield-check" width="16" height="16"></i> Vocea Studenților</div>
+          <h1 class="reveal del-1">Studenți Reprezentanți</h1>
+          <p class="reveal del-2">Ei sunt colegii care vă reprezintă interesele în Consiliile Facultăților și în Senatul Universității. Alege facultatea ta pentru a vedea cu cine poți lua legătura.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="reprezentanti">
+      <div class="container">
+        <div class="repr-header reveal">
+          <div class="repr-badge">Mandat 2024–2029</div>
+          <h2>Senatul Universitar</h2>
+          <p>Cei 11 studenți aleși democratic să vă reprezinte interesele la cel mai înalt nivel decizional al universității.</p>
+        </div>
+
+        <div class="senators-grid" id="senatGrid">
+           <div class="loader-msg"><i data-lucide="loader-2" class="lucide-spin" style="margin-bottom:10px;"></i><br>Se încarcă datele din sistem...</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="consilii">
+      <div class="container">
+        <div class="repr-header reveal" style="margin-bottom: 50px;">
+          <div class="repr-badge" style="background:var(--color-primary-light); color:var(--color-primary);">Consiliile Facultăților</div>
+          <h2>Reprezentanți Locali</h2>
+          <p>Alege facultatea ta pentru a vedea studenții care te reprezintă și datele lor de contact direct.</p>
+        </div>
+
+        <div class="accordion" id="acordeonConsilii">
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer">
+    © 2026 ASUS Suceava. Toate drepturile rezervate.
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Inițializare Bază de Date
+      const SUPABASE_URL = 'https://hxlwskalrmcepaqdyrgp.supabase.co';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4bHdza2Fscm1jZXBhcWR5cmdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwMzE0NDYsImV4cCI6MjA5MjYwNzQ0Nn0.9V9PDaNtSvZqrP4Kg6YahvIKMiJfPpVZpLW26d0NbZw';
+      const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      if (window.lucide) { lucide.createIcons(); }
+
+      // 2. Navigație și Temă
+      const html = document.documentElement;
+      const themeToggle = document.getElementById('themeToggle');
+      const iconSun = document.getElementById('iconSun');
+      const iconMoon = document.getElementById('iconMoon');
+
+      themeToggle.addEventListener('click', () => {
+          const isDark = html.getAttribute('data-theme') === 'dark';
+          html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+          iconSun.style.display = isDark ? 'none' : 'block';
+          iconMoon.style.display = isDark ? 'block' : 'none';
+      });
+
+      const navbar = document.getElementById('navbar');
+      window.addEventListener('scroll', () => {
+          if (window.scrollY > 50) navbar.classList.add('scrolled');
+          else navbar.classList.remove('scrolled');
+      });
+
+      const hamburger = document.getElementById('hamburger');
+      const drawer = document.getElementById('mobileDrawer');
+      const overlay = document.getElementById('drawerOverlay');
+
+      const toggleDrawer = () => {
+          const isOpen = drawer.classList.toggle('open');
+          overlay.classList.toggle('visible');
+          hamburger.setAttribute('aria-expanded', isOpen);
+      };
+      hamburger.addEventListener('click', toggleDrawer);
+      overlay.addEventListener('click', toggleDrawer);
+      drawer.querySelectorAll('a').forEach(link => link.addEventListener('click', toggleDrawer));
+
+      const observerOptions = { threshold: 0.1, rootMargin: "0px 0px -30px 0px" };
+      const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                  entry.target.classList.add('visible');
+              }
+          });
+      }, observerOptions);
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+      // 3. Funcție pentru generarea inițialelor
+      function getInitials(name) {
+          if(!name) return 'ST';
+          let parts = name.trim().split(' ');
+          if(parts.length === 1) return parts[0].substring(0,2).toUpperCase();
+          return (parts[0][0] + parts[1][0]).toUpperCase();
+      }
+
+      // 4. PRELUAREA DATELOR DIN SUPABASE ȘI CONSTRUIREA PAGINII
+      async function loadLiveReps() {
+          const senatGrid = document.getElementById('senatGrid');
+          const consiliiGrid = document.getElementById('acordeonConsilii');
+
+          try {
+              // Cerem toți studenții din baza de date
+              const { data, error } = await _supabase.from('representatives').select('*');
+              if (error) throw error;
+
+              if (!data || data.length === 0) {
+                  senatGrid.innerHTML = '<div class="loader-msg">Nu există date momentan.</div>';
+                  consiliiGrid.innerHTML = '';
+                  return;
+              }
+
+              // --- A. Construim secțiunea SENAT ---
+              const senatori = data.filter(d => d.body && d.body.toLowerCase().includes('senat'));
+              let htmlSenat = '';
+              senatori.forEach((s, idx) => {
+                  const delayClass = idx < 4 ? `del-${idx}` : ''; // Punem delay doar la primii 4
+                  htmlSenat += `
+                    <div class="senator-card reveal ${delayClass}">
+                      <div class="senator-avatar">${getInitials(s.name)}</div>
+                      <div class="senator-name">${s.name}</div>
+                      <div class="senator-faculty">${s.faculty_name}</div>
+                      <div class="senator-contact">
+                        <a href="tel:${s.phone}">${s.phone}</a>
+                        <a href="mailto:${s.email}">${s.email}</a>
+                      </div>
+                      <span class="senator-badge"><i data-lucide="award" width="12" height="12"></i> Senator</span>
+                    </div>
+                  `;
+              });
+              senatGrid.innerHTML = htmlSenat || '<div class="loader-msg">Niciun senator înregistrat.</div>';
+
+              // --- B. Construim secțiunea CONSILII ---
+              const consilieri = data.filter(d => !d.body || !d.body.toLowerCase().includes('senat'));
+              const grouped = {};
+              
+              // Grupăm studenții în funcție de numele facultății lor
+              consilieri.forEach(c => {
+                  const fName = c.faculty_name || 'Altă Facultate';
+                  if(!grouped[fName]) {
+                      grouped[fName] = { abbr: c.faculty_acronym || 'USV', members: [] };
+                  }
+                  grouped[fName].members.push(c);
+              });
+
+              let htmlConsilii = '';
+              let accIdx = 0;
+              
+              // Iterăm prin grupurile de facultăți și creăm HTML-ul pentru acordeon
+              for(const [fName, groupData] of Object.entries(grouped)) {
+                  const delayClass = accIdx < 6 ? `del-${accIdx}` : '';
+                  accIdx++;
+                  
+                  htmlConsilii += `
+                    <div class="acc-item reveal ${delayClass}">
+                        <button class="acc-trigger" aria-expanded="false" onclick="this.setAttribute('aria-expanded', this.getAttribute('aria-expanded') === 'false' ? 'true' : 'false'); this.nextElementSibling.classList.toggle('open')">
+                            <span class="acc-abbr">${groupData.abbr}</span>
+                            <span>${fName}</span>
+                            <i data-lucide="chevron-down" class="acc-chevron" style="width: 20px; height: 20px;"></i>
+                        </button>
+                        <div class="acc-body">
+                            <div class="acc-inner">
+                              <div class="acc-content-pad">
+                                ${groupData.members.map(m => `
+                                    <div class="repr-row">
+                                        <div class="repr-avatar-sm">${getInitials(m.name)}</div>
+                                        <div class="repr-info">
+                                            <strong>${m.name}</strong>
+                                            <span class="role">Consiliu</span>
+                                            <span class="contact">${m.phone} • <a href="mailto:${m.email}">${m.email}</a></span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                              </div>
+                            </div>
+                        </div>
+                    </div>
+                  `;
+              }
+              consiliiGrid.innerHTML = htmlConsilii;
+
+              // Re-activăm iconițele și animațiile pentru noile elemente generate
+              if (window.lucide) lucide.createIcons();
+              document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+          } catch (e) {
+              console.error('Eroare conexiune DB:', e);
+              senatGrid.innerHTML = '<div class="loader-msg" style="color:red">Eroare de conexiune la baza de date. Reîncărcați pagina.</div>';
+          }
+      }
+      
+      // Lansăm funcția care face magia
+      loadLiveReps();
+    });
+  </script>
+</body>
+</html>

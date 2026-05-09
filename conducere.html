@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ro" data-theme="light">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conducere ASUS Suceava</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* VARIABILE DE BAZĂ */
+    :root {
+      --color-primary: #003087; --color-primary-hover: #001f5c; --color-primary-light: #e8edf7;
+      --color-red: #D62828; --color-gold: #F4A261; --color-teal: #0096C7;
+      --color-bg: #F0F4F8; --color-surface: #FFFFFF; --color-border: rgba(0,48,135,0.12);
+      --color-text: #0A1628; --color-text-muted: #4A5568; --color-text-faint: #A0AEC0;
+      
+      --shadow-md: 0 12px 32px rgba(0,48,135,0.08);
+      --shadow-lg: 0 24px 60px rgba(0,48,135,0.15);
+      
+      --radius-lg: 20px; --radius-xl: 30px; --radius-full: 9999px;
+      --font-display: 'Plus Jakarta Sans', sans-serif; --font-body: 'Inter', sans-serif;
+      
+      --navbar-bg: transparent; --navbar-scrolled-bg: rgba(255,255,255,0.85);
+      --nav-link-color: rgba(255,255,255,0.9); --nav-link-scrolled: #4A5568;
+    }
+
+    [data-theme="dark"] {
+      --color-primary: #4D7FCC; --color-primary-light: #0d1e3d;
+      --color-bg: #0A1628; --color-surface: #111d35; --color-border: rgba(255,255,255,0.10);
+      --color-text: #E2E8F4; --color-text-muted: #8899BB;
+      --navbar-scrolled-bg: rgba(10,22,40,0.85); --nav-link-scrolled: #8899BB;
+    }
+
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth;font-size:16px}
+    body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-text);line-height:1.6;overflow-x:hidden;}
+    a{text-decoration:none;color:inherit}
+    img{max-width:100%;height:auto;display:block}
+
+    h1, h2, h3 { font-family:var(--font-display); }
+    .container{max-width:1200px;margin:0 auto;padding:0 24px}
+
+    /* NAVBAR */
+    #navbar{position:fixed;top:0;left:0;right:0;z-index:1000;transition:all .5s cubic-bezier(0.16, 1, 0.3, 1); padding: 15px 0;}
+    #navbar.scrolled{background:var(--navbar-scrolled-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:var(--shadow-md); padding: 5px 0;}
+    .nav-inner{display:flex;align-items:center;justify-content:space-between;height:70px;gap:20px}
+    .nav-links{display:flex;align-items:center;gap:6px;flex:1;justify-content:center}
+    .nav-links a{font-weight:600;font-size:.9rem;padding:10px 18px;border-radius:var(--radius-full);color:var(--nav-link-color);transition:all .3s}
+    .nav-links a:hover{color:#fff;background:rgba(255,255,255,.2)}
+    #navbar.scrolled .nav-links a{color:var(--nav-link-scrolled)}
+    #navbar.scrolled .nav-links a:hover{color:var(--color-primary);background:var(--color-primary-light)}
+    .logo-alb { display: block; width: 180px; object-fit: contain; } 
+    .logo-negru { display: none; width: 180px; object-fit: contain;}
+    #navbar.scrolled .logo-alb { display: none; }
+    #navbar.scrolled .logo-negru { display: block; }
+
+    /* ANIMAȚII */
+    .reveal { opacity: 0; transform: translateY(50px); transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .del-1 { transition-delay: 0.1s; } .del-2 { transition-delay: 0.2s; } .del-3 { transition-delay: 0.3s; }
+
+    /* HERO */
+    #hero { min-height: 50vh; background: linear-gradient(135deg, var(--color-primary) 0%, rgba(26, 115, 232, 1) 100%); display: flex; align-items: flex-end; padding-bottom: 60px; position: relative; overflow: hidden; }
+    .hero-pattern {position:absolute;inset:0;pointer-events:none;opacity:.1;background-image:radial-gradient(circle,#fff 1px,transparent 1px);background-size:30px 30px;}
+    .hero-content { position: relative; z-index: 2; color: white; }
+    .hero-content h1 { font-size: clamp(2.5rem, 5vw, 4rem); margin-bottom: 15px; }
+    .hero-content p { font-size: 1.2rem; color: rgba(255,255,255,0.8); max-width: 600px; }
+
+    /* HEADER SECȚIUNE */
+    .section-header { text-align: center; margin: 80px 0 50px; }
+    .badge{display:inline-flex;align-items:center;gap:8px;font-size:.75rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--color-primary);background:var(--color-primary-light);padding:8px 16px;border-radius:var(--radius-full);margin-bottom:16px}
+    .section-header h2 { font-size: 2.5rem; color: var(--color-text); }
+    .section-subtitle { font-size: 1.05rem; color: var(--color-text-muted); max-width: 600px; margin: 15px auto 0; }
+
+    /* CARDURI CONDUCERE */
+    .board-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin-bottom: 60px; }
+    .board-grid.presedinte-row { grid-template-columns: minmax(320px, 400px); justify-content: center; }
+
+    .member-card {
+        position: relative; border-radius: var(--radius-xl); overflow: hidden;
+        aspect-ratio: 3 / 4; box-shadow: var(--shadow-md); cursor: crosshair; background: #e0e5ec;
+    }
+    .member-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s; filter: grayscale(20%); }
+    .member-overlay {
+        position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 20, 50, 0.9) 0%, rgba(0, 20, 50, 0.4) 50%, transparent 100%);
+        opacity: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 30px 20px; transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .member-name { color: white; font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 5px; transform: translateY(30px); transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+    .member-role { color: var(--color-gold); font-size: 0.85rem; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em; transform: translateY(30px); transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); transition-delay: 0.05s; }
+
+    .member-card:hover .member-img { transform: scale(1.08); filter: grayscale(0%); }
+    .member-card:hover .member-overlay { opacity: 1; }
+    .member-card:hover .member-name, .member-card:hover .member-role { transform: translateY(0); }
+
+    /* ════════════════════════════════════════════════════════════════
+       ISTORIC (CADRAN CU SCROLL)
+    ════════════════════════════════════════════════════════════════ */
+    #istoric { background: var(--color-surface); padding: 80px 0 100px; margin-top: 50px; border-radius: 40px 40px 0 0; box-shadow: 0 -20px 50px rgba(0,0,0,0.05);}
+    
+    .timeline-box-wrapper {
+        background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl);
+        padding: 40px 20px 40px 40px; box-shadow: var(--shadow-lg); max-width: 700px; margin: 0 auto;
+    }
+
+    .timeline-scroll-area { max-height: 450px; overflow-y: auto; padding-right: 20px; }
+    .timeline-scroll-area::-webkit-scrollbar { width: 6px; }
+    .timeline-scroll-area::-webkit-scrollbar-track { background: var(--color-bg); border-radius: 10px; }
+    .timeline-scroll-area::-webkit-scrollbar-thumb { background: var(--color-primary-light); border-radius: 10px; }
+    .timeline-scroll-area::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+
+    .timeline-container { position: relative; padding-left: 30px; padding-top: 10px; }
+    .timeline-container::before {
+        content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+        background: linear-gradient(to bottom, var(--color-primary), var(--color-teal), transparent); border-radius: 3px;
+    }
+
+    .timeline-item { position: relative; padding-bottom: 40px; transition: transform 0.2s; }
+    .timeline-item:last-child { padding-bottom: 10px; }
+    .timeline-item:hover { transform: translateX(10px); }
+
+    .timeline-dot {
+        position: absolute; left: -38.5px; top: 0; width: 16px; height: 16px; border-radius: 50%;
+        background: var(--color-surface); border: 3px solid var(--color-primary);
+        box-shadow: 0 0 0 4px rgba(0, 48, 135, 0.1); transition: all 0.3s;
+    }
+    .timeline-item:hover .timeline-dot {
+        background: var(--color-primary); transform: scale(1.2); box-shadow: 0 0 10px rgba(0, 48, 135, 0.3);
+    }
+
+    .timeline-year {
+        display: inline-block; padding: 4px 14px; background: var(--color-primary-light);
+        color: var(--color-primary); font-weight: 800; border-radius: var(--radius-full);
+        font-size: 0.85rem; letter-spacing: 0.1em; margin-bottom: 10px;
+    }
+    .timeline-content h3 { font-size: 1.3rem; color: var(--color-text); margin-bottom: 4px; }
+    .timeline-content p { color: var(--color-text-muted); font-size: 0.9rem; }
+    .timeline-content .missing-name { color: var(--color-text-faint); font-style: italic; font-weight: 500; font-size: 1rem; }
+
+    /* FOOTER */
+    #footer{background:#0A1628;padding:40px 0; text-align:center; color:rgba(255,255,255,0.4); margin-top: 0;}
+    
+    .loader-msg { text-align: center; padding: 40px; font-weight: 700; color: var(--color-primary); grid-column: 1/-1;}
+
+    @media (max-width: 600px) {
+        .timeline-box-wrapper { padding: 30px 10px 30px 20px; }
+        .timeline-scroll-area { padding-right: 10px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header id="navbar">
+    <div class="container nav-inner">
+      <a href="asus-suceava.html" class="nav-logo">
+        <img src="logo-alb.png" alt="Logo ASUS" class="logo-alb">
+        <img src="logo-negru.png" alt="Logo ASUS" class="logo-negru">
+      </a>
+      <nav class="nav-links">
+        <a href="asus-suceava.html#despre">Despre noi</a>
+        <a href="reprezentanti.html">Studenți Reprezentanți</a>
+        <a href="conducere.html" style="color:var(--color-gold);">Conducere</a>
+        <a href="asus-suceava.html#proiecte">Proiecte</a>
+        <a href="stiri.html">Știri</a>
+        <a href="asus-suceava.html#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="hero">
+      <div class="hero-pattern"></div>
+      <div class="container">
+        <div class="hero-content">
+          <div class="badge reveal" style="background: rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.4);">
+            <i data-lucide="users"></i> Oamenii ASUS
+          </div>
+          <h1 class="reveal del-1">Conducerea Asociației</h1>
+          <p class="reveal del-2">Studenții care își dedică timpul și energia pentru a coordona, inova și reprezenta comunitatea din Universitatea „Ștefan cel Mare” din Suceava.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="container" style="padding-top: 60px;">
+      <div class="section-header reveal">
+        <div class="badge">Decizie și Strategie</div>
+        <h2>Biroul de Conducere</h2>
+      </div>
+
+      <div class="board-grid presedinte-row" id="gridPresedinte"></div>
+      <div class="board-grid" id="gridBC">
+          <div class="loader-msg"><i data-lucide="loader-2" class="lucide-spin" style="margin-bottom:10px;"></i><br>Se încarcă datele din sistem...</div>
+      </div>
+    </section>
+
+    <section class="container" style="padding-top: 40px;">
+      <div class="section-header reveal">
+        <div class="badge" style="background: rgba(0, 150, 199, 0.1); color: var(--color-teal);">Implementare și Creație</div>
+        <h2>Biroul de Conducere Extins</h2>
+      </div>
+
+      <div class="board-grid" id="gridBCE">
+          </div>
+    </section>
+
+    <section class="container" style="padding-top: 40px;">
+      <div class="section-header reveal">
+        <div class="badge" style="background: rgba(214, 40, 40, 0.1); color: var(--color-red);">Control și Audit</div>
+        <h2>Cenzor</h2>
+      </div>
+
+      <div class="board-grid presedinte-row" id="gridCenzor">
+          </div>
+    </section>
+
+    <section id="istoric">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="badge"><i data-lucide="history"></i> Arhivă</div>
+          <h2>Istoria Președinților</h2>
+          <p class="section-subtitle">Derulează pentru a vedea oamenii care au condus și au pus bazele organizației noastre de-a lungul anilor.</p>
+        </div>
+
+        <div class="timeline-box-wrapper reveal">
+          <div class="timeline-scroll-area">
+            <div class="timeline-container" id="gridIstoric">
+                <div class="loader-msg" style="color:var(--color-text-faint);">Istoricul nu este populat momentan.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer id="footer">
+    © 2026 ASUS Suceava. Toate drepturile rezervate.
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Inițializare Bază de Date
+      const SUPABASE_URL = 'https://hxlwskalrmcepaqdyrgp.supabase.co';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4bHdza2Fscm1jZXBhcWR5cmdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwMzE0NDYsImV4cCI6MjA5MjYwNzQ0Nn0.9V9PDaNtSvZqrP4Kg6YahvIKMiJfPpVZpLW26d0NbZw';
+      const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      if (window.lucide) { lucide.createIcons(); }
+
+      const navbar = document.getElementById('navbar');
+      window.addEventListener('scroll', () => {
+          if (window.scrollY > 50) navbar.classList.add('scrolled');
+          else navbar.classList.remove('scrolled');
+      });
+
+      const observerOptions = { threshold: 0.1, rootMargin: "0px 0px -50px 0px" };
+      const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                  entry.target.classList.add('visible');
+              }
+          });
+      }, observerOptions);
+
+      // 2. Funcția de extragere date din Supabase
+      async function incarcaConducerea() {
+          const gridPresedinte = document.getElementById('gridPresedinte');
+          const gridBC = document.getElementById('gridBC');
+          const gridBCE = document.getElementById('gridBCE');
+          const gridCenzor = document.getElementById('gridCenzor');
+          const gridIstoric = document.getElementById('gridIstoric');
+
+          try {
+              // Obținem toate datele din tabelul "conducere"
+              const { data, error } = await _supabase.from('conducere').select('*').order('ordine', { ascending: true, nullsFirst: false });
+              if (error) throw error;
+
+              if (!data || data.length === 0) {
+                  gridBC.innerHTML = '<div class="loader-msg">Nu a fost adăugat niciun membru din panoul de Admin.</div>';
+                  return;
+              }
+
+              // Pregătim „cutiile” pentru HTML
+              let htmlPresedinte = '';
+              let htmlBC = '';
+              let htmlBCE = '';
+              let htmlCenzor = '';
+              let htmlIstoric = '';
+
+              // Funcție pentru generarea cardurilor (ca să nu ne repetăm)
+              const generateCard = (m, extradelay = '') => `
+                <div class="member-card reveal ${extradelay}">
+                  <img src="${m.poza_url || 'https://picsum.photos/seed/asus/600/800'}" alt="Poza membru" class="member-img" loading="lazy">
+                  <div class="member-overlay">
+                    <h3 class="member-name">${m.nume}</h3>
+                    <div class="member-role">${m.functie}</div>
+                  </div>
+                </div>
+              `;
+
+              // Împărțim membrii pe categorii (bc, bce, cenzor, istoric)
+              data.forEach((membru, idx) => {
+                  const categorie = (membru.categorie || '').toLowerCase();
+                  const delay = idx % 3 === 0 ? '' : `del-${idx % 3}`; // Animații în cascadă
+
+                  if (categorie === 'istoric') {
+                      // Format special pentru linia timpului
+                      htmlIstoric += `
+                        <div class="timeline-item">
+                          <div class="timeline-dot"></div>
+                          <div class="timeline-content">
+                            <div class="timeline-year">${membru.an_mandat || 'N/A'}</div>
+                            <h3>${membru.nume}</h3>
+                            ${membru.functie ? `<p>${membru.functie}</p>` : ''}
+                          </div>
+                        </div>
+                      `;
+                  } 
+                  else if (categorie === 'cenzor') {
+                      htmlCenzor += generateCard(membru);
+                  } 
+                  else if (categorie === 'bce') {
+                      htmlBCE += generateCard(membru, delay);
+                  } 
+                  else {
+                      // Dacă e președinte (verificăm funcția), îl punem în grid-ul mare de sus
+                      if (membru.functie && membru.functie.toLowerCase().includes('președinte') && !membru.functie.toLowerCase().includes('vice')) {
+                          htmlPresedinte += generateCard(membru);
+                      } else {
+                          htmlBC += generateCard(membru, delay);
+                      }
+                  }
+              });
+
+              // Afișăm în pagină
+              gridPresedinte.innerHTML = htmlPresedinte;
+              gridBC.innerHTML = htmlBC || '<div class="loader-msg" style="color:var(--color-text-faint);">Niciun alt membru adăugat în BC.</div>';
+              gridBCE.innerHTML = htmlBCE || '<div class="loader-msg" style="color:var(--color-text-faint);">BCE nu este populat.</div>';
+              gridCenzor.innerHTML = htmlCenzor || '<div class="loader-msg" style="color:var(--color-text-faint);">Niciun cenzor desemnat.</div>';
+              gridIstoric.innerHTML = htmlIstoric || '<div class="loader-msg" style="color:var(--color-text-faint);">Istoricul nu este populat.</div>';
+
+              // Re-inițializare vizuală
+              if (window.lucide) lucide.createIcons();
+              document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+          } catch (e) {
+              console.error(e);
+              gridBC.innerHTML = '<div class="loader-msg" style="color:red;">Eroare de conexiune la baza de date. Reîncărcați pagina!</div>';
+          }
+      }
+
+      incarcaConducerea();
+    });
+  </script>
+</body>
+</html>
